@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#030712">
+    <title>Dream Portal | Check in, Dream it.</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #FFFFFF;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-mono-code {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        /* Cyber Grid Background Pattern */
+        .bg-cyber-grid {
+            background-image: 
+                radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px),
+                linear-gradient(to right, rgba(153, 204, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(153, 204, 255, 0.04) 1px, transparent 1px);
+            background-size: 20px 20px, 40px 40px, 40px 40px;
+        }
+        
+        /* Glow Effects */
+        .glow-white {
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 24px rgba(153, 204, 255, 0.6);
+        }
+        .glow-box-blue {
+            box-shadow: 0 0 20px rgba(153, 204, 255, 0.2), inset 0 0 15px rgba(153, 204, 255, 0.08);
+        }
+        
+        /* Bounding Box Handles */
+        .handle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #FFFFFF;
+            border: 1px solid #99CCFF;
+        }
+
+        /* Glassmorphic Interactive Card Base */
+        .interactive-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(10, 15, 30, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Active Highlight Effect (Fades out automatically via JS) */
+        .interactive-card.card-active {
+            background: rgba(153, 204, 255, 0.15) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1.5px solid rgba(153, 204, 255, 0.9) !important;
+            box-shadow: 0 0 25px rgba(153, 204, 255, 0.4), inset 0 0 15px rgba(153, 204, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Button Press Active State */
+        .btn-pressed {
+            transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .btn-pressed:active, .btn-pressed.active-state {
+            transform: scale(0.96) !important;
+            filter: brightness(1.25);
+            box-shadow: 0 0 12px rgba(153, 204, 255, 0.4);
+        }
+
+        /* Spinner to Checkmark Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 3px solid rgba(153, 204, 255, 0.2);
+            border-top: 3px solid #99CCFF;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+        .checkmark-circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 3;
+            stroke-miterlimit: 10;
+            stroke: #669933;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark-check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+        }
+    </style>
+</head>
+<body class="bg-cyber-grid min-h-screen flex justify-center items-center p-0 md:p-4">
+
+    <!-- Mobile-optimized Frame Container (9:16 Ratio Cap) -->
+    <div id="app-container" class="w-full max-w-[430px] h-[100vh] md:h-[880px] bg-[#030712] border border-[#99CCFF]/40 relative flex flex-col justify-between overflow-hidden md:rounded-3xl glow-box-blue">
+        
+        <!-- Header / System Status -->
+        <header class="z-50 bg-[#030712]/90 backdrop-blur-md border-b border-[#99CCFF]/20 px-4 py-3 flex justify-between items-center text-xs font-mono-code">
+            <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#669933] animate-pulse"></span>
+                <span class="font-bold tracking-widest text-[#99CCFF] text-sm">DREAM PORTAL</span>
+            </div>
+            <span class="text-gray-400 text-xs">[SYS_ONLINE]</span>
+        </header>
+
+        <!-- Main Scrollable Canvas -->
+        <main id="scroll-canvas" class="flex-1 overflow-y-auto p-5 space-y-6 relative">
+
+            <!-- PAGE 1: HOME -->
+            <section id="page-home" class="space-y-6 relative min-h-full pb-6">
+                
+                <!-- Brand Title Banner -->
+                <div class="relative p-5 border border-[#99CCFF]/40 bg-black/50 backdrop-blur-sm z-10">
+                    <div class="handle -top-1 -left-1"></div>
+                    <div class="handle -top-1 -right-1"></div>
+                    <div class="handle -bottom-1 -left-1"></div>
+                    <div class="handle -bottom-1 -right-1"></div>
+                    
+                    <span class="absolute -top-3 left-3 bg-[#030712] px-1.5 text-xs font-mono-code text-[#99CCFF] border border-[#99CCFF]/30">[DREAM_PORTAL_SYSTEM]</span>
+                    
+                    <h1 class="text-3xl font-extrabold tracking-tight text-white glow-white mt-1 font-mono-code">DREAM PORTAL</h1>
+                    <p class="text-xs font-mono-code text-[#99CCFF] mt-1.5 tracking-widest font-semibold">CHECK IN, DREAM IT.</p>
+                </div>
+
+                <!-- Highly Visible Hands Connecting Artwork (Central Highlight Feature) -->
+                <div class="relative w-full h-56 border border-[#99CCFF]/30 bg-black/70 overflow-hidden flex items-center justify-center p-2 z-10">
+                    <div class="absolute inset-0 bg-gradient-to-r from-[#99CCFF]/10 via-transparent to-[#FF9966]/10"></div>
+                    <span class="absolute top-2 left-3 text-[10px] font-mono-code text-[#99CCFF] tracking-wider">// DREAM & REALITY INTERSECTION</span>
+                    
+                    <svg viewBox="0 0 400 220" class="w-full h-full">
+                        <defs>
+                            <!-- Virtual Hand Grid Pattern -->
+                            <pattern id="virtual-grid" width="8" height="8" patternUnits="userSpaceOnUse">
+                                <path d="M 8 0 L 0 0 0 8" fill="none" stroke="#99CCFF" stroke-width="0.8" opacity="0.8"/>
+                            </pattern>
+                            <!-- Central Connection Core Glow -->
+                            <radialGradient id="core-glow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+                                <stop offset="25%" stop-color="#99CCFF" stop-opacity="0.85"/>
+                                <stop offset="60%" stop-color="#669933" stop-opacity="0.5"/>
+                                <stop offset="100%" stop-color="#030712" stop-opacity="0"/>
+                            </radialGradient>
+                            <!-- Warm Reality Hand Gradient -->
+                            <linearGradient id="warm-reality" x1="0%" y1="100%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#FFB380" stop-opacity="1"/>
+                                <stop offset="100%" stop-color="#FF8000" stop-opacity="0.8"/>
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Intersection Radial Light Halo -->
+                        <circle cx="200" cy="110" r="55" fill="url(#core-glow)" class="animate-pulse"/>
+                        <circle cx="200" cy="110" r="20" fill="#FFFFFF" opacity="0.9" filter="blur(4px)"/>
+
+                        <!-- Left Side: Virtual / Dream Hand (Cyan Grid Mesh) -->
+                        <g>
+                            <path d="M 20 50 Q 110 80 192 108" fill="none" stroke="#99CCFF" stroke-width="3" stroke-dasharray="6 3"/>
+                            <path d="M 20 20 L 120 70 L 192 108 L 150 140 Z" fill="url(#virtual-grid)"/>
+                            <circle cx="192" cy="108" r="5" fill="#99CCFF"/>
+                            <text x="30" y="40" fill="#99CCFF" font-size="10" font-family="monospace">[VIRTUAL_REALITY]</text>
+                        </g>
+
+                        <!-- Right Side: Reality Hand (Warm Radiant Contour) -->
+                        <g>
+                            <path d="M 380 170 C 310 150 250 130 208 112" fill="none" stroke="url(#warm-reality)" stroke-width="4.5" stroke-linecap="round"/>
+                            <path d="M 360 200 C 300 170 240 140 208 112" fill="none" stroke="url(#warm-reality)" stroke-width="2.5" opacity="0.7"/>
+                            <circle cx="208" cy="112" r="5" fill="#FFB380"/>
+                            <text x="290" y="190" fill="#FFB380" font-size="10" font-family="monospace">[HUMAN_TOUCH]</text>
+                        </g>
+
+                        <!-- Energy Shockwave Rings at Contact Point -->
+                        <circle cx="200" cy="110" r="32" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="4 4"/>
+                        <circle cx="200" cy="110" r="70" fill="none" stroke="#99CCFF" stroke-width="0.8" opacity="0.5"/>
+                    </svg>
+                </div>
+
+                <!-- Promo Film Placeholder -->
+                <div class="relative border border-white/30 bg-black aspect-video flex flex-col justify-between p-4 overflow-hidden cursor-pointer btn-pressed z-10" onclick="playAd()">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                    <div class="flex justify-between items-center z-10 text-[11px] font-mono-code text-gray-400">
+                        <span>PROMO_FILM // NOSTALGIA</span>
+                    </div>
+                    <div class="z-10 flex items-center space-x-3 my-auto">
+                        <div class="w-11 h-11 rounded-full border border-[#99CCFF] flex items-center justify-center bg-[#99CCFF]/20 text-[#99CCFF]">
+                            <i data-lucide="play" class="w-5 h-5 ml-0.5"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white">Relive Tender Conversations in Dreams</p>
+                            <p class="text-[11px] text-gray-400 font-mono-code">WATCH PROMOTIONAL FILM</p>
+                        </div>
+                    </div>
+                    <div class="z-10 text-[11px] font-mono-code text-[#99CCFF] flex justify-between border-t border-white/10 pt-1.5">
+                        <span>AUDIO_ENABLED</span>
+                        <span>00:30 SEC</span>
+                    </div>
+                </div>
+
+                <!-- Two-Step Section -->
+                <div class="space-y-3 z-10 relative">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-mono-code text-[#669933] font-bold">// PROCESS</span>
+                        <h2 class="text-xs font-bold tracking-wider text-gray-300 uppercase">Two Steps to Launch Your Journey</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="interactive-card p-4 relative cursor-pointer" onclick="triggerCardGlow(this)">
+                            <span class="text-xs text-[#99CCFF] font-mono-code font-bold block mb-1">STEP 01</span>
+                            <p class="font-bold text-gray-100 text-sm">Online Dream Submission</p>
+                            <p class="text-xs text-gray-300 mt-1 leading-relaxed">Record your dream details using text or voice, and optionally upload reference images to power the VR generation engine.</p>
+                        </div>
+                        <div class="interactive-card p-4 relative cursor-pointer" onclick="triggerCardGlow(this)">
+                            <span class="text-xs text-[#669933] font-mono-code font-bold block mb-1">STEP 02</span>
+                            <p class="font-bold text-gray-100 text-sm">Offline VR Immersion</p>
+                            <p class="text-xs text-gray-300 mt-1 leading-relaxed">Book a session at our offline venue in Hong Kong to put on the VR gear and step directly into your memories.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="switchPage('page-submit')" class="w-full py-4 bg-[#99CCFF] text-black font-mono-code font-bold text-xs tracking-wider border border-white transition-all btn-pressed flex items-center justify-center space-x-2 z-10 relative mt-2">
+                    <span>START SUBMISSION</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+
+            </section>
+
+
+            <!-- PAGE 2: SUBMISSION FORM -->
+            <section id="page-submit" class="hidden space-y-5">
+                <div class="border-l-2 border-[#99CCFF] pl-3 font-mono-code">
+                    <p class="text-[#99CCFF] font-bold text-xs">// DREAM RECORDING</p>
+                    <p class="text-[11px] text-gray-400">INPUT DATA FOR VR GENERATION</p>
+                </div>
+
+                <form id="dream-form" onsubmit="goToBooking(event)" class="space-y-4">
+                    <!-- Text / Voice Input -->
+                    <div class="space-y-1.5">
+                        <label class="text-gray-200 text-xs font-bold block">Dream Description / Voice Input</label>
+                        <div class="relative">
+                            <textarea id="dream-text" rows="4" placeholder="Describe your dream narrative in detail, or tap voice record..." class="w-full p-3 bg-black border border-gray-800 text-xs text-gray-100 placeholder-gray-600 resize-none transition-all focus:outline-none focus:border-[#99CCFF] focus:ring-1 focus:ring-[#99CCFF]"></textarea>
+                            <button type="button" id="record-btn" onclick="toggleRecording()" class="absolute right-2 bottom-2.5 px-2.5 py-1.5 bg-gray-900 border border-gray-700 text-[11px] text-gray-200 flex items-center space-x-1 hover:border-[#669933] btn-pressed font-mono-code">
+                                <i data-lucide="mic" id="mic-icon" class="w-3.5 h-3.5 text-[#669933]"></i>
+                                <span id="record-status" class="font-bold">VOICE RECORD</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Emotional Tone -->
+                    <div class="space-y-1.5">
+                        <label class="text-gray-200 text-xs font-bold block">Emotional Tone</label>
+                        <select class="w-full p-3 bg-black border border-gray-800 text-xs text-gray-100 focus:outline-none focus:border-[#99CCFF] transition-all">
+                            <option>1. Nostalgic & Warm (Reunion & Comfort)</option>
+                            <option>2. Bittersweet (Reminiscence & Longing)</option>
+                            <option>3. Serene & Tracing (Peace & Calm)</option>
+                            <option>4. Surreal Odyssey (Fantasy & Uncanny)</option>
+                            <option>5. Emotional Catharsis (Release & Farewell)</option>
+                        </select>
+                    </div>
+
+                    <!-- Reference Image Upload -->
+                    <div class="interactive-card p-3.5 relative space-y-1.5 cursor-pointer" onclick="triggerCardGlow(this)">
+                        <label class="text-gray-200 text-xs font-bold block">Upload Reference Images (Optional)</label>
+                        <input type="file" accept="image/*" class="text-[11px] text-gray-300 file:mr-2 file:py-1 file:px-2.5 file:border-0 file:bg-gray-800 file:text-gray-200 file:font-mono-code file:text-[11px]">
+                        <p class="text-[10px] text-[#669933] mt-1 leading-relaxed">
+                            * Disclaimer: Reference images are strictly used for single-session VR rendering and will never be added to AI training databases. Facial features will be procedurally generated if omitted.
+                        </p>
+                    </div>
+
+                    <!-- Modal Disclaimer Link -->
+                    <button type="button" onclick="openDisclaimer()" class="w-full text-left text-xs text-[#99CCFF] underline py-1 font-bold btn-pressed">
+                        View Full Terms & Disclaimer
+                    </button>
+
+                    <div class="flex space-x-3 pt-2 font-mono-code">
+                        <button type="button" onclick="switchPage('page-home')" class="w-1/3 py-3 border border-gray-800 text-gray-300 text-xs font-bold btn-pressed">BACK</button>
+                        <button type="submit" class="w-2/3 py-3 bg-[#99CCFF] text-black font-bold text-xs flex items-center justify-center space-x-1 btn-pressed">
+                            <span>PROCEED TO BOOKING</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+
+            <!-- PAGE 3: BOOKING CALENDAR -->
+            <section id="page-booking" class="hidden space-y-5">
+                <div class="border-l-2 border-[#669933] pl-3 font-mono-code">
+                    <p class="text-[#669933] font-bold text-xs">// SCHEDULE APPOINTMENT</p>
+                    <p class="text-[11px] text-gray-400">EARLIEST SLOT AVAILABLE IN 3 DAYS</p>
+                </div>
+
+                <div class="p-4 border border-gray-800 bg-black space-y-3">
+                    <p class="text-xs text-gray-300 font-bold mb-2">Select Immersion Experience Date:</p>
+                    
+                    <div class="grid grid-cols-1 gap-2.5" id="date-options">
+                        <!-- Dates generated dynamically by JS -->
+                    </div>
+                </div>
+
+                <button onclick="confirmBooking()" class="w-full py-4 bg-[#669933] text-black font-bold text-xs border border-white flex items-center justify-center space-x-2 btn-pressed font-mono-code">
+                    <span>CONFIRM APPOINTMENT</span>
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                </button>
+            </section>
+
+
+            <!-- PAGE 4: SPINNER TO CHECKMARK ANIMATION -->
+            <section id="page-check" class="hidden flex flex-col items-center justify-center py-28 space-y-5">
+                <div id="animation-container" class="w-20 h-20 relative flex items-center justify-center">
+                    <!-- Spinner active initially -->
+                    <div id="spinner" class="spinner"></div>
+                    <!-- Checkmark hidden initially -->
+                    <svg id="checkmark-svg" class="hidden w-20 h-20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                        <circle class="checkmark-circle" cx="26" cy="26" r="25"/>
+                        <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                </div>
+                <p id="anim-status-text" class="text-xs font-mono-code text-[#99CCFF] tracking-widest font-bold">PROCESSING_DREAM_DATA...</p>
+            </section>
+
+
+            <!-- PAGE 5: STORED CONFIRMATION -->
+            <section id="page-result" class="hidden space-y-5">
+                <div class="text-center space-y-1">
+                    <span class="text-xs text-[#669933] font-mono-code font-bold">// CONFIRMED</span>
+                    <h2 class="text-lg font-bold text-white glow-white">Booking & Dream Data Stored</h2>
+                </div>
+
+                <div class="p-4 border border-[#99CCFF]/50 bg-black relative space-y-3.5 font-mono-code">
+                    <div class="handle -top-1 -left-1"></div>
+                    <div class="handle -top-1 -right-1"></div>
+                    <div class="handle -bottom-1 -left-1"></div>
+                    <div class="handle -bottom-1 -right-1"></div>
+
+                    <div class="flex justify-between border-b border-gray-800 pb-2 text-xs">
+                        <span class="text-gray-400">PORTAL ID</span>
+                        <span class="text-[#99CCFF] font-bold" id="portal-id">#DP-9902-HK</span>
+                    </div>
+
+                    <div class="flex justify-between border-b border-gray-800 pb-2 text-xs">
+                        <span class="text-gray-400">BOOKED DATE</span>
+                        <span class="text-[#669933] font-bold" id="confirmed-date">2026-09-23</span>
+                    </div>
+
+                    <div class="pt-2 flex flex-col items-center justify-center space-y-2">
+                        <div class="w-28 h-28 bg-white p-1.5 flex items-center justify-center">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DreamPortal-Entry" alt="QR Code" class="w-full h-full">
+                        </div>
+                        <p class="text-[11px] text-gray-400 text-center">Present this QR code upon arrival at venue</p>
+                    </div>
+                </div>
+
+                <button onclick="switchPage('page-home')" class="w-full py-3.5 border border-gray-800 text-gray-300 text-xs font-bold btn-pressed font-mono-code">RETURN TO HOME</button>
+            </section>
+
+        </main>
+
+        <!-- Terms & Disclaimer Modal (Full Requested English Version) -->
+        <div id="disclaimer-modal" class="hidden fixed inset-0 z-50 bg-black/95 p-5 flex flex-col justify-between overflow-y-auto text-[11px] leading-relaxed">
+            <div class="space-y-4 text-gray-300">
+                <h3 class="text-sm font-bold text-[#99CCFF] border-b border-gray-800 pb-2 font-mono-code">DISCLAIMER & TERMS OF USE</h3>
+                
+                <div class="space-y-1.5">
+                    <p class="font-bold text-white text-xs">1. Health Conditions and Age Restrictions</p>
+                    <p>• <strong>Age Limit:</strong> This experience is strictly restricted to individuals between 18 and 65 years of age. Minors under 18 will not be admitted.</p>
+                    <p>• <strong>Prohibited Groups:</strong> Due to the visual impact, dynamic simulation, and psychological stress associated with VR experiences, the following individuals are strictly prohibited from participating:</p>
+                    <p class="pl-3 text-gray-400">o Pregnant women.</p>
+                    <p class="pl-3 text-gray-400">o Individuals with heart disease, high blood pressure, vascular disorders, epilepsy (photosensitive epilepsy), vertigo, or severe cardiopulmonary dysfunction.</p>
+                    <p class="pl-3 text-gray-400">o Individuals suffering from claustrophobia, severe acrophobia, or psychiatric/psychological conditions currently undergoing treatment.</p>
+                    <p>• <strong>Waiver for Concealed Conditions:</strong> If a customer conceals any of the aforementioned health conditions and insists on participating, the store shall bear no liability for any physical discomfort, medical emergencies, or personal accidents. All legal responsibilities and medical expenses shall be borne solely by the customer.</p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <p class="font-bold text-white text-xs">2. Substance and Behavioral Policy</p>
+                    <p>• <strong>Strictly No Drugs or Alcohol:</strong> Customers are strictly prohibited from consuming illegal drugs, controlled psychoactive substances, or any alcoholic beverages prior to or during the experience.</p>
+                    <p>• <strong>Right of Refusal:</strong> If staff members observe any signs of intoxication, altered mental state, emotional loss of control, or suspected drug use, the store reserves the right to refuse entry or cancel the experience unilaterally, and no refunds will be issued for fees already paid.</p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <p class="font-bold text-white text-xs">3. Personal Property and Electronics Policy</p>
+                    <p>• <strong>No Electronic Devices Permitted:</strong> Upon entering the VR experience zone, all electronic devices are strictly prohibited (including but not limited to mobile phones, cameras, smartwatches, tablets, and power banks). All personal belongings must be stored in the lockers provided on-site.</p>
+                    <p>• <strong>Liability for Lost Property:</strong> Customers are responsible for keeping their personal valuables safe. The store accepts no liability for any loss or damage to personal property.</p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <p class="font-bold text-white text-xs">4. Equipment Damage and Cleaning Liability</p>
+                    <p>• <strong>Duty of Care:</strong> Customers must follow staff instructions at all times and use the VR equipment and capsules properly.</p>
+                    <p>• <strong>Damage Compensation:</strong> In the event that any hardware equipment (such as VR headsets, sensors, capsule structures, audio systems, etc.) is damaged due to customer misuse, rough handling, intentional vandalism, or failure to follow instructions, the customer shall pay full compensation at replacement cost (based on official manufacturer parts and repair quotations).</p>
+                    <p>• <strong>Cleaning Fee:</strong> If any VR equipment, seating, flooring, or surrounding environment is soiled or contaminated due to personal factors (e.g., severe motion sickness, vomiting, or alcohol-related reactions during the experience), the customer shall pay an additional professional cleaning and disinfection fee ranging from HKD $1,000 to $3,000.</p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <p class="font-bold text-white text-xs">5. Governing Law and Limitation of Liability</p>
+                    <p>• <strong>Governing Law:</strong> The interpretation and enforcement of this disclaimer shall be governed by the laws of the Hong Kong Special Administrative Region. Any disputes arising herefrom shall be submitted to the exclusive jurisdiction of the courts of the Hong Kong Special Administrative Region.</p>
+                    <p>• <strong>Assumption of Risk:</strong> The customer acknowledges that virtual reality (VR) experiences may induce varying degrees of motion sickness, visual fatigue, or psychological impact. By signing or agreeing to this disclaimer, the customer voluntarily assumes all potential risks associated with participating in this experience and waives any right to hold the store liable for minor discomforts arising from normal operation.</p>
+                </div>
+            </div>
+
+            <button onclick="closeDisclaimer()" class="w-full py-3.5 bg-[#99CCFF] text-black font-bold text-xs mt-4 btn-pressed font-mono-code">I UNDERSTAND & AGREE</button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="p-3 text-center text-[10px] font-mono-code text-gray-500 border-t border-gray-900 bg-[#030712]">
+            DREAM PORTAL © 2026 // ALL DATA ENCRYPTED
+        </footer>
+
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        lucide.createIcons();
+
+        let isRecording = false;
+        let selectedDate = "";
+
+        // Interactive Card Click Glow - Fades after 2.5 seconds
+        function triggerCardGlow(cardElement) {
+            cardElement.classList.add('card-active');
+            setTimeout(() => {
+                cardElement.classList.remove('card-active');
+            }, 2500);
+        }
+
+        // Mobile Touch Active Patch
+        document.addEventListener('touchstart', function(e) {
+            let target = e.target.closest('.btn-pressed');
+            if (target) target.classList.add('active-state');
+        }, {passive: true});
+
+        document.addEventListener('touchend', function(e) {
+            let target = e.target.closest('.btn-pressed');
+            if (target) target.classList.remove('active-state');
+        }, {passive: true});
+
+        function switchPage(pageId) {
+            ['page-home', 'page-submit', 'page-booking', 'page-check', 'page-result'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+            document.getElementById('scroll-canvas').scrollTop = 0;
+        }
+
+        function playAd() {
+            alert("[Dream Portal Promo Film]\n'Lost in regret? Share your dream online, relive that tenderness and release in VR.'");
+        }
+
+        function toggleRecording() {
+            isRecording = !isRecording;
+            const status = document.getElementById('record-status');
+            const icon = document.getElementById('mic-icon');
+            const textarea = document.getElementById('dream-text');
+
+            if (isRecording) {
+                status.innerText = "RECORDING...";
+                status.classList.add("text-red-400");
+                icon.classList.add("animate-pulse");
+                textarea.placeholder = "[Recording active... Please describe your dream clearly...]";
+            } else {
+                status.innerText = "VOICE RECORD";
+                status.classList.remove("text-red-400");
+                icon.classList.remove("animate-pulse");
+                textarea.value = "I dreamed of her standing in a golden field of flowers again, smiling at me softly as if time had never passed...";
+            }
+        }
+
+        function openDisclaimer() { document.getElementById('disclaimer-modal').classList.remove('hidden'); }
+        function closeDisclaimer() { document.getElementById('disclaimer-modal').classList.add('hidden'); }
+
+        function goToBooking(e) {
+            e.preventDefault();
+            generateDateOptions();
+            switchPage('page-booking');
+        }
+
+        function generateDateOptions() {
+            const container = document.getElementById('date-options');
+            container.innerHTML = "";
+            
+            const today = new Date();
+            for (let i = 3; i <= 6; i++) {
+                const nextDate = new Date(today);
+                nextDate.setDate(today.getDate() + i);
+                
+                const dateStr = nextDate.toISOString().split('T')[0];
+                const label = i === 3 ? `${dateStr} (Earliest Available)` : dateStr;
+                const isFirst = i === 3;
+
+                const optionCard = document.createElement('label');
+                optionCard.className = `interactive-card p-3.5 flex items-center justify-between cursor-pointer rounded-sm`;
+                optionCard.onclick = function() {
+                    triggerCardGlow(this);
+                };
+
+                optionCard.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="radio" name="booking-date" value="${dateStr}" ${isFirst ? 'checked' : ''} class="accent-[#669933] w-4 h-4">
+                        <span class="text-gray-100 text-xs font-bold font-mono-code">${label}</span>
+                    </div>
+                    <span class="text-[10px] text-[#669933] font-mono-code font-bold">OPEN</span>
+                `;
+                container.appendChild(optionCard);
+            }
+        }
+
+        function confirmBooking() {
+            const radios = document.getElementsByName('booking-date');
+            for (let radio of radios) {
+                if (radio.checked) {
+                    selectedDate = radio.value;
+                    break;
+                }
+            }
+
+            // Show page 4 animation sequence
+            switchPage('page-check');
+            
+            const spinner = document.getElementById('spinner');
+            const checkmarkSvg = document.getElementById('checkmark-svg');
+            const statusText = document.getElementById('anim-status-text');
+
+            // Reset state
+            spinner.classList.remove('hidden');
+            checkmarkSvg.classList.add('hidden');
+            statusText.innerText = "PROCESSING_DREAM_DATA...";
+            statusText.classList.replace('text-[#669933]', 'text-[#99CCFF]');
+
+            // Step 1: Spinner rotates for 1.2s, then morphs into checkmark
+            setTimeout(() => {
+                spinner.classList.add('hidden');
+                checkmarkSvg.classList.remove('hidden');
+                statusText.innerText = "DATA_STORED_SUCCESSFULLY";
+                statusText.classList.replace('text-[#99CCFF]', 'text-[#669933]');
+            }, 1200);
+
+            // Step 2: Transition to final result page after checkmark completes
+            setTimeout(() => {
+                document.getElementById('confirmed-date').innerText = selectedDate;
+                document.getElementById('portal-id').innerText = '#DP-' + Math.floor(1000 + Math.random() * 9000) + '-HK';
+                switchPage('page-result');
+            }, 2600);
+        }
+    </script>
+</body>
+</html>
