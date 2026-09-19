@@ -256,12 +256,12 @@
                     <p class="text-[11px] text-gray-400">INPUT DATA FOR VR GENERATION</p>
                 </div>
 
-                <form id="dream-form" onsubmit="goToBooking(event)" class="space-y-4">
+                <form id="dream-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
                     <!-- Text / Voice Input -->
                     <div class="space-y-1.5">
                         <label class="text-gray-200 text-xs font-bold block">Dream Description / Voice Input</label>
                         <div class="relative">
-                            <textarea id="dream-text" rows="4" placeholder="Describe your dream narrative in detail, or tap voice record..." class="w-full p-3 bg-black border border-gray-800 text-xs text-gray-100 placeholder-gray-600 resize-none transition-all focus:outline-none focus:border-[#99CCFF] focus:ring-1 focus:ring-[#99CCFF]"></textarea>
+                            <textarea id="dream-text" rows="4" required placeholder="Describe your dream narrative in detail, or tap voice record..." class="w-full p-3 bg-black border border-gray-800 text-xs text-gray-100 placeholder-gray-600 resize-none transition-all focus:outline-none focus:border-[#99CCFF] focus:ring-1 focus:ring-[#99CCFF]"></textarea>
                             <button type="button" id="record-btn" onclick="toggleRecording()" class="absolute right-2 bottom-2.5 px-2.5 py-1.5 bg-gray-900 border border-gray-700 text-[11px] text-gray-200 flex items-center space-x-1 hover:border-[#669933] btn-pressed font-mono-code">
                                 <i data-lucide="mic" id="mic-icon" class="w-3.5 h-3.5 text-[#669933]"></i>
                                 <span id="record-status" class="font-bold">VOICE RECORD</span>
@@ -272,12 +272,12 @@
                     <!-- Emotional Tone -->
                     <div class="space-y-1.5">
                         <label class="text-gray-200 text-xs font-bold block">Emotional Tone</label>
-                        <select class="w-full p-3 bg-black border border-gray-800 text-xs text-gray-100 focus:outline-none focus:border-[#99CCFF] transition-all">
-                            <option>1. Nostalgic & Warm (Reunion & Comfort)</option>
-                            <option>2. Bittersweet (Reminiscence & Longing)</option>
-                            <option>3. Serene & Tracing (Peace & Calm)</option>
-                            <option>4. Surreal Odyssey (Fantasy & Uncanny)</option>
-                            <option>5. Emotional Catharsis (Release & Farewell)</option>
+                        <select id="dream-tone" class="w-full p-3 bg-black border border-gray-800 text-xs text-gray-100 focus:outline-none focus:border-[#99CCFF] transition-all">
+                            <option value="Nostalgic & Warm">1. Nostalgic & Warm (Reunion & Comfort)</option>
+                            <option value="Bittersweet">2. Bittersweet (Reminiscence & Longing)</option>
+                            <option value="Serene & Tracing">3. Serene & Tracing (Peace & Calm)</option>
+                            <option value="Surreal Odyssey">4. Surreal Odyssey (Fantasy & Uncanny)</option>
+                            <option value="Emotional Catharsis">5. Emotional Catharsis (Release & Farewell)</option>
                         </select>
                     </div>
 
@@ -297,8 +297,8 @@
 
                     <div class="flex space-x-3 pt-2 font-mono-code">
                         <button type="button" onclick="switchPage('page-home')" class="w-1/3 py-3 border border-gray-800 text-gray-300 text-xs font-bold btn-pressed">BACK</button>
-                        <button type="submit" class="w-2/3 py-3 bg-[#99CCFF] text-black font-bold text-xs flex items-center justify-center space-x-1 btn-pressed">
-                            <span>PROCEED TO BOOKING</span>
+                        <button type="submit" id="submit-btn" class="w-2/3 py-3 bg-[#99CCFF] text-black font-bold text-xs flex items-center justify-center space-x-1 btn-pressed">
+                            <span id="submit-btn-text">PROCEED TO BOOKING</span>
                             <i data-lucide="chevron-right" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -434,6 +434,9 @@
     <script>
         lucide.createIcons();
 
+        // 已填入你提供的 Apps Script Web App URL
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzHDqAnhIy5QAY5UhS9DZkjvK2ak_7cl_VIkpwBz6RK8fGAT4DnVcRDUCCfgOJKJI2D/exec';
+
         let isRecording = false;
         let selectedDate = "";
 
@@ -490,10 +493,36 @@
         function openDisclaimer() { document.getElementById('disclaimer-modal').classList.remove('hidden'); }
         function closeDisclaimer() { document.getElementById('disclaimer-modal').classList.add('hidden'); }
 
-        function goToBooking(e) {
+        // 處理表單提交並傳送資料至 Google Sheets
+        function handleFormSubmit(e) {
             e.preventDefault();
-            generateDateOptions();
-            switchPage('page-booking');
+            
+            const btnText = document.getElementById('submit-btn-text');
+            const originalText = btnText.innerText;
+            btnText.innerText = "UPLOADING...";
+
+            const payload = {
+                dreamText: document.getElementById('dream-text').value,
+                tone: document.getElementById('dream-tone').value
+            };
+
+            // 以 POST 發送 JSON 數據給 Google Apps Script
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors', // 避免跨網域限制
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                btnText.innerText = originalText;
+                generateDateOptions();
+                switchPage('page-booking');
+            })
+            .catch(err => {
+                console.error('Error!', err.message);
+                alert('提交失敗，請檢查網路連線。');
+                btnText.innerText = originalText;
+            });
         }
 
         function generateDateOptions() {
